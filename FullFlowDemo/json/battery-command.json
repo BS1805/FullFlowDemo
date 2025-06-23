@@ -1,0 +1,17 @@
+{
+    "specversion": "1.0",
+    "type": "com.evergen.energy.battery-inverter.command.v1",
+    "source": "urn:example:evergen",
+    "id": "cmd-001",
+    "time": "2025-06-23T12:02:00Z",
+    "datacontenttype": "application/json",
+    "data": {
+        "deviceId": "Device123",
+        "realMode": {
+            "chargeCommand": {
+                "powerW": 500
+            }
+        },
+        "durationSeconds": 300
+    }
+}
