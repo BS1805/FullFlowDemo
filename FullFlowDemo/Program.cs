@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Text.Json;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
@@ -27,143 +28,57 @@ namespace FullFlowDemo
                     AuthenticationRegion = region.SystemName
                 });
 
-            Console.WriteLine("[*] Waiting for OnboardingRequest...");
+            var messageProcessor = new MessageProcessor(sqsClient, telemetryQueueUrl);
+
+            Console.WriteLine("[*] Waiting for OnboardingRequest or BatteryCommand...");
 
             while (true)
             {
-                var receiveRequest = new ReceiveMessageRequest
-                {
-                    QueueUrl = commandsQueueUrl,
-                    MaxNumberOfMessages = 5,
-                    WaitTimeSeconds = 10
-                };
+                var messages = await ReceiveMessagesAsync(sqsClient, commandsQueueUrl);
 
-                var response = await sqsClient.ReceiveMessageAsync(receiveRequest);
-
-                if (response.Messages == null)
-                {
-                    Console.WriteLine("[!] No messages received or an error occurred (Messages is null).");
-                    continue;
-                }
-
-                Console.WriteLine($"Received {response.Messages.Count} message(s).");
-
-                foreach (var msg in response.Messages)
+                foreach (var msg in messages)
                 {
                     Console.WriteLine($"[<] Received message on commands-demo: {msg.Body}");
 
                     try
                     {
-                        var jsonDoc = JsonDocument.Parse(msg.Body);
-                        var root = jsonDoc.RootElement;
-                        string type = root.GetProperty("type").GetString();
-
-                        if (type == "onboarding-request")
-                        {
-                            await SendOnboardingResponse(sqsClient, telemetryQueueUrl);
-                            _ = Task.Run(() => StartTelemetryLoop(sqsClient, telemetryQueueUrl));
-                        }
-                        else if (type == "battery-inverter.command.v1")
-                        {
-                            await HandleBatteryCommand(root);
-                        }
+                        await messageProcessor.ProcessMessageAsync(msg.Body);
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"[!] Error parsing message: {e.Message}");
+                        Console.WriteLine($"[!] Error processing message: {e.Message}");
+                        Console.WriteLine($"[!] Stack trace: {e.StackTrace}");
                     }
 
-                    await sqsClient.DeleteMessageAsync(commandsQueueUrl, msg.ReceiptHandle);
+                    await DeleteMessageAsync(sqsClient, commandsQueueUrl, msg.ReceiptHandle);
                 }
             }
         }
 
-        static async Task SendOnboardingResponse(IAmazonSQS sqsClient, string telemetryQueueUrl)
+        private static async Task<List<Message>> ReceiveMessagesAsync(IAmazonSQS sqsClient, string queueUrl)
         {
-            var payload = new
+            var receiveRequest = new ReceiveMessageRequest
             {
-                serialNumber = "SN123",
-                status = "Connected"
+                QueueUrl = queueUrl,
+                MaxNumberOfMessages = 5,
+                WaitTimeSeconds = 10
             };
 
-            var cloudEvent = new CloudEvent
-            {
-                Id = Guid.NewGuid().ToString(),
-                Type = "com.evergen.energy.onboarding-response.v1",
-                Source = new Uri("urn:example:oem"),
-                Time = DateTimeOffset.UtcNow,
-                DataContentType = "application/json",
-                Data = payload
-            };
-
-            var formatter = new JsonEventFormatter();
-            var jsonBytes = formatter.EncodeStructuredModeMessage(cloudEvent, out var contentType);
-            var json = System.Text.Encoding.UTF8.GetString(jsonBytes.ToArray());
-
-            await sqsClient.SendMessageAsync(new SendMessageRequest
-            {
-                QueueUrl = telemetryQueueUrl,
-                MessageBody = json
-            });
-
-            Console.WriteLine("[>] Sent OnboardingResponse");
+            var response = await sqsClient.ReceiveMessageAsync(receiveRequest);
+            return response.Messages ?? new List<Message>();
         }
 
-
-        static async Task StartTelemetryLoop(IAmazonSQS sqsClient, string telemetryQueueUrl)
+        private static async Task DeleteMessageAsync(IAmazonSQS sqsClient, string queueUrl, string receiptHandle)
         {
-            while (true)
+            try
             {
-                var telemetryPayload = new
-                {
-                    siteID = "SiteABC",
-                    batteryPowerW = 100
-                };
-
-                var cloudEvent = new CloudEvent
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Type = "com.evergen.energy.telemetry.v1",
-                    Source = new Uri("urn:example:oem"),
-                    Time = DateTimeOffset.UtcNow,
-                    DataContentType = "application/json",
-                    Data = telemetryPayload
-                };
-
-                var formatter = new JsonEventFormatter();
-                var json = JsonSerializer.Serialize(cloudEvent);
-
-                await sqsClient.SendMessageAsync(new SendMessageRequest
-                {
-                    QueueUrl = telemetryQueueUrl,
-                    MessageBody = json
-                });
-
-                Console.WriteLine("[*] Telemetry sent: " + json);
-                await Task.Delay(60_000); // every 60 seconds
+                await sqsClient.DeleteMessageAsync(queueUrl, receiptHandle);
+                Console.WriteLine("[*] Message deleted from queue");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[!] Error deleting message: {e.Message}");
             }
         }
-
-        static async Task HandleBatteryCommand(JsonElement root)
-        {
-            string command = root.GetProperty("command").GetString();
-            int value = root.GetProperty("value").GetInt32();
-
-            Console.WriteLine($"[>] Received battery command: {command}, value={value}");
-
-            if (command == "start")
-            {
-                Console.WriteLine($"[ACTION] Starting inverter at value: {value}");
-            }
-            else if (command == "stop")
-            {
-                Console.WriteLine("[ACTION] Stopping inverter");
-            }
-            else
-            {
-                Console.WriteLine("[ACTION] Unknown command");
-            }
-        }
-
     }
 }

@@ -1,0 +1,29 @@
+{
+    "specversion": "1.0",
+    "type": "com.evergen.energy.telemetry.v1",
+    "source": "urn:example:oem",
+    "id": "telemetry-001",
+    "time": "2025-06-23T12:01:00Z",
+    "datacontenttype": "application/json",
+    "data": {
+        "siteId": "SiteABC",
+        "batteryInverters": [
+            {
+                "deviceId": "Device123",
+                "deviceTime": "2025-06-23T12:01:00Z",
+                "batteryPowerW": 100,
+                "meterPowerW": 0,
+                "solarPowerW": 0,
+                "batteryReactivePowerVar": 0,
+                "gridVoltage1V": 230,
+                "gridFrequencyHz": 50,
+                "cumulativeBatteryChargeEnergyWh": 0,
+                "cumulativeBatteryDischargeEnergyWh": 0,
+                "stateOfCharge": 1,
+                "stateOfHealth": 1,
+                "maxChargePowerW": 100,
+                "maxDischargePowerW": 100
+            }
+        ]
+    }
+}
