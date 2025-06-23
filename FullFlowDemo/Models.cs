@@ -125,9 +125,12 @@ public class CommandV1
 public class CommandV1Data
 {
     public string deviceId { get; set; }
-    public RealModeCommand realMode { get; set; }  // Changed to proper type
+    public RealModeCommand realMode { get; set; }
+    public ReactiveModeCommand reactiveMode { get; set; }
+    public string startTime { get; set; }
     public int? durationSeconds { get; set; }
 }
+
 
 
 public class RealModeCommand
@@ -266,7 +269,6 @@ public class OffboardingResponseV1Data
     public string serialNumber { get; set; }
     public string deviceId { get; set; }
     public string connectionStatus { get; set; }
-    public string errorReason { get; set; }
 }
 
 // Site Static Data

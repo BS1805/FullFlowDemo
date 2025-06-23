@@ -42,6 +42,10 @@ namespace FullFlowDemo
                     await HandleBatteryCommandAsync(cloudEvent);
                     break;
 
+                case "com.evergen.energy.offboarding-request.v1":
+                    await HandleOffboardingRequestAsync(cloudEvent);
+                    break;
+
                 default:
                     Console.WriteLine($"[!] Unknown message type: {type}");
                     break;
@@ -59,6 +63,17 @@ namespace FullFlowDemo
             await _telemetryService.SendOnboardingResponseAsync(onboardingRequestData?.serialNumber);
             _ = Task.Run(() => _telemetryService.StartTelemetryLoopAsync());
         }
+
+        private async Task HandleOffboardingRequestAsync(CloudEvent cloudEvent)
+        {
+            var offboardingRequestData = _cloudEventParser.DeserializeData<OffboardingRequestV1Data>(cloudEvent.Data);
+            Console.WriteLine($"[<] OffboardingRequest for serial: {offboardingRequestData?.serialNumber}");
+
+            // Simulate processing the offboarding request
+            Console.WriteLine($"[>] Processing offboarding for serial: {offboardingRequestData?.serialNumber}");
+            await Task.CompletedTask;
+        }
+
 
         /// <summary>
         /// Handles a battery command by deserializing the command data and processing it.

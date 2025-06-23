@@ -96,7 +96,10 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="asyncapi.yaml" />
+    <None Include="json\offboarding-request.json" />
     <None Include="json\battery-command.json" />
+    <None Include="json\onboarding-response.json" />
+    <None Include="json\offboarding-response.json" />
     <None Include="json\onboarding-request.json" />
     <None Include="json\telemetry.json" />
     <None Include="packages.config" />
@@ -105,6 +108,8 @@
     <Analyzer Include="..\packages\AWSSDK.SQS.4.0.0.11\analyzers\dotnet\cs\AWSSDK.SQS.CodeAnalysis.dll" />
     <Analyzer Include="..\packages\AWSSDK.SQS.4.0.0.11\analyzers\dotnet\cs\SharedAnalysisCode.dll" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="commands.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

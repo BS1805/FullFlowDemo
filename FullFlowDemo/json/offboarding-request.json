@@ -1,0 +1,11 @@
+{
+    "specversion": "1.0",
+    "type": "com.evergen.energy.offboarding-request.v1",
+    "source": "urn:example:evergen",
+    "id": "offboard-001",
+    "time": "2025-06-23T12:02:00Z",
+    "datacontenttype": "application/json",
+    "data": {
+        "serialNumber": "SN12345"
+    }
+}

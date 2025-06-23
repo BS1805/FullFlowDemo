@@ -34,24 +34,20 @@ namespace FullFlowDemo
 
             while (true)
             {
-                var messages = await ReceiveMessagesAsync(sqsClient, commandsQueueUrl);
-
-                foreach (var msg in messages)
+                var telemetryMessages = await ReceiveMessagesAsync(sqsClient, telemetryQueueUrl);
+                foreach (var msg in telemetryMessages)
                 {
-                    Console.WriteLine($"[<] Received message on commands-demo: {msg.Body}");
-
-                    try
-                    {
-                        await messageProcessor.ProcessMessageAsync(msg.Body);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"[!] Error processing message: {e.Message}");
-                        Console.WriteLine($"[!] Stack trace: {e.StackTrace}");
-                    }
-
-                    await DeleteMessageAsync(sqsClient, commandsQueueUrl, msg.ReceiptHandle);
+                    Console.WriteLine($"[<] Received telemetry message: {msg.Body}");
+                    // Process telemetry messages
                 }
+
+                var commandMessages = await ReceiveMessagesAsync(sqsClient, commandsQueueUrl);
+                foreach (var msg in commandMessages)
+                {
+                    Console.WriteLine($"[<] Received command message: {msg.Body}");
+                    await messageProcessor.ProcessMessageAsync(msg.Body);
+                }
+
             }
         }
 

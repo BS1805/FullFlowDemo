@@ -3,14 +3,14 @@
     "type": "com.evergen.energy.telemetry.v1",
     "source": "urn:example:oem",
     "id": "telemetry-001",
-    "time": "2025-06-23T12:01:00Z",
+    "time": "2025-06-23T12:02:00Z",
     "datacontenttype": "application/json",
     "data": {
         "siteId": "SiteABC",
         "batteryInverters": [
             {
                 "deviceId": "Device123",
-                "deviceTime": "2025-06-23T12:01:00Z",
+                "deviceTime": "2025-06-23T12:02:00Z",
                 "batteryPowerW": 100,
                 "meterPowerW": 0,
                 "solarPowerW": 0,

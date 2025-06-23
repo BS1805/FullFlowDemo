@@ -1,0 +1,13 @@
+{
+    "specversion": "1.0",
+    "type": "com.evergen.energy.onboarding-response.v1",
+    "source": "urn:example:oem",
+    "id": "onboard-res-001",
+    "time": "2025-06-23T12:02:00Z",
+    "datacontenttype": "application/json",
+    "data": {
+        "serialNumber": "SN12345",
+        "deviceId": "Device123",
+        "connectionStatus": "connected"
+    }
+}

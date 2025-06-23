@@ -1,0 +1,43 @@
+﻿Command for running LocalStack:
+docker run -d --name localstack-main -p 4566:4566 -p 4571:4571 localstack/localstack
+
+Command for creating SQS Queues:
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name commands-demo
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name telemetry-demo
+
+Command for goto dir:
+cd C:\Users\BS00829\source\repos\FullFlowDemo\FullFlowDemo
+
+Command for onBoard:
+   aws --endpoint-url=http://localhost:4566 sqs send-message ^
+     --queue-url http://localhost:4566/000000000000/commands-demo ^
+     --message-body file://json/onboarding-request.json
+   
+Command for telemetry:
+aws --endpoint-url=http://localhost:4566 sqs send-message ^
+     --queue-url http://localhost:4566/000000000000/telemetry-demo ^
+     --message-body file://json/telemetry.json
+Commad for battery-command
+aws --endpoint-url=http://localhost:4566 sqs send-message ^
+     --queue-url http://localhost:4566/000000000000/commands-demo ^
+     --message-body file://json/battery-command.json
+
+Offboarding Request:
+aws --endpoint-url=http://localhost:4566 sqs send-message ^
+    --queue-url http://localhost:4566/000000000000/commands-demo ^
+    --message-body file://json/offboarding-request.json
+
+Offboarding Response:
+
+aws --endpoint-url=http://localhost:4566 sqs send-message ^
+    --queue-url http://localhost:4566/000000000000/telemetry-demo ^
+    --message-body file://json/offboarding-response.json
+
+Onboarding Response:
+
+aws --endpoint-url=http://localhost:4566 sqs send-message ^
+    --queue-url http://localhost:4566/000000000000/telemetry-demo ^
+    --message-body file://json/onboarding-response.json
+
+
+
