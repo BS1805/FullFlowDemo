@@ -86,9 +86,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CloudEventParser.cs" />
+    <Compile Include="MessageProcessor.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TelemetryService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
