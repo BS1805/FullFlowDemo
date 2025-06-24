@@ -17,6 +17,7 @@ Command for telemetry:
 aws --endpoint-url=http://localhost:4566 sqs send-message ^
      --queue-url http://localhost:4566/000000000000/telemetry-demo ^
      --message-body file://json/telemetry.json
+
 Commad for battery-command
 aws --endpoint-url=http://localhost:4566 sqs send-message ^
      --queue-url http://localhost:4566/000000000000/commands-demo ^
@@ -39,5 +40,16 @@ aws --endpoint-url=http://localhost:4566 sqs send-message ^
     --queue-url http://localhost:4566/000000000000/telemetry-demo ^
     --message-body file://json/onboarding-response.json
 
+Clear Queues :
+   aws --endpoint-url=http://localhost:4566 sqs purge-queue --queue-url http://localhost:4566/000000000000/commands-demo
+   aws --endpoint-url=http://localhost:4566 sqs purge-queue --queue-url http://localhost:4566/000000000000/telemetry-demo
 
 
+Verify Queues Empty:
+   aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url http://localhost:4566/000000000000/commands-demo
+   aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url http://localhost:4566/000000000000/telemetry-demo
+   
+
+Commands & Telemetry:
+•	Commands are sent by Evergen (simulated by you via CLI).
+•	Telemetry and responses are sent by your application (the OEM/device).

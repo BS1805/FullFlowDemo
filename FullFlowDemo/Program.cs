@@ -45,8 +45,12 @@ namespace FullFlowDemo
                 foreach (var msg in commandMessages)
                 {
                     Console.WriteLine($"[<] Received command message: {msg.Body}");
-                    await messageProcessor.ProcessMessageAsync(msg.Body);
+                    await messageProcessor.ProcessMessageAsync(msg.Body, msg.ReceiptHandle, commandsQueueUrl);  // Process the message
+
+                    // Delete the message after processing
+                    //await DeleteMessageAsync(sqsClient, commandsQueueUrl, msg.ReceiptHandle);
                 }
+
 
             }
         }
@@ -62,19 +66,6 @@ namespace FullFlowDemo
 
             var response = await sqsClient.ReceiveMessageAsync(receiveRequest);
             return response.Messages ?? new List<Message>();
-        }
-
-        private static async Task DeleteMessageAsync(IAmazonSQS sqsClient, string queueUrl, string receiptHandle)
-        {
-            try
-            {
-                await sqsClient.DeleteMessageAsync(queueUrl, receiptHandle);
-                Console.WriteLine("[*] Message deleted from queue");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[!] Error deleting message: {e.Message}");
-            }
         }
     }
 }

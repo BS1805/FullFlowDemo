@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.SQS;
+using Amazon.SQS.Model;
 using CloudNative.CloudEvents;
 using Newtonsoft.Json.Linq;
 
@@ -24,31 +25,76 @@ namespace FullFlowDemo
 
         /// <summary>
         /// Processes a single message by determining its type and delegating to the appropriate handler.
+        /// Deletes the message after successful processing.
         /// </summary>
-        public async Task ProcessMessageAsync(string messageBody)
+        public async Task ProcessMessageAsync(string messageBody, string receiptHandle, string queueUrl)
         {
-            var cloudEvent = _cloudEventParser.Parse(messageBody);
-            var type = cloudEvent.Type;
-
-            Console.WriteLine($"[*] Message type: {type}");
-
-            switch (type)
+            try
             {
-                case "com.evergen.energy.onboarding-request.v1":
-                    await HandleOnboardingRequestAsync(cloudEvent);
-                    break;
+                var cloudEvent = _cloudEventParser.Parse(messageBody);
+                var type = cloudEvent.Type;
 
-                case "com.evergen.energy.battery-inverter.command.v1":
-                    await HandleBatteryCommandAsync(cloudEvent);
-                    break;
+                Console.WriteLine($"[*] Message type: {type}");
 
-                case "com.evergen.energy.offboarding-request.v1":
-                    await HandleOffboardingRequestAsync(cloudEvent);
-                    break;
+                switch (type)
+                {
+                    case "com.evergen.energy.onboarding-request.v1":
+                        await HandleOnboardingRequestAsync(cloudEvent);
+                        break;
 
-                default:
-                    Console.WriteLine($"[!] Unknown message type: {type}");
-                    break;
+                    case "com.evergen.energy.battery-inverter.command.v1":
+                        await HandleBatteryCommandAsync(cloudEvent);
+                        break;
+
+                    case "com.evergen.energy.offboarding-request.v1":
+                        await HandleOffboardingRequestAsync(cloudEvent);
+                        break;
+
+                    case "com.evergen.energy.onboarding-response.v1":
+                        HandleOnboardingResponse(cloudEvent);
+                        break;
+
+                    case "com.evergen.energy.offboarding-response.v1":
+                        HandleOffboardingResponse(cloudEvent);
+                        break;
+
+                    default:
+                        Console.WriteLine($"[!] Unknown message type: {type}");
+                        break;
+                }
+
+                // Delete the message after processing
+                await DeleteMessageAsync(receiptHandle, queueUrl);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[!] Error processing message: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a message from the SQS queue.
+        /// </summary>
+        private async Task DeleteMessageAsync(string receiptHandle, string queueUrl)
+        {
+            try
+            {
+                await _sqsClient.DeleteMessageAsync(new DeleteMessageRequest
+                {
+                    QueueUrl = queueUrl,
+                    ReceiptHandle = receiptHandle
+                });
+
+                Console.WriteLine("[*] Message deleted from the queue.");
+            }
+            catch (ReceiptHandleIsInvalidException ex)
+            {
+                Console.WriteLine($"[!] Invalid receipt handle: {receiptHandle}");
+                Console.WriteLine($"[!] Exception: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[!] Error deleting message: {ex.Message}");
             }
         }
 
@@ -64,16 +110,17 @@ namespace FullFlowDemo
             _ = Task.Run(() => _telemetryService.StartTelemetryLoopAsync());
         }
 
+        /// <summary>
+        /// Handles an offboarding request by stopping the telemetry loop.
+        /// </summary>
         private async Task HandleOffboardingRequestAsync(CloudEvent cloudEvent)
         {
             var offboardingRequestData = _cloudEventParser.DeserializeData<OffboardingRequestV1Data>(cloudEvent.Data);
             Console.WriteLine($"[<] OffboardingRequest for serial: {offboardingRequestData?.serialNumber}");
 
-            // Simulate processing the offboarding request
-            Console.WriteLine($"[>] Processing offboarding for serial: {offboardingRequestData?.serialNumber}");
-            await Task.CompletedTask;
+            await _telemetryService.SendOffboardingResponseAsync(offboardingRequestData?.serialNumber);
+            _telemetryService.StopTelemetryLoop();
         }
-
 
         /// <summary>
         /// Handles a battery command by deserializing the command data and processing it.
@@ -85,6 +132,20 @@ namespace FullFlowDemo
 
             Console.WriteLine($"[*] Deserialized command data - DeviceId: {commandData?.deviceId}, DurationSeconds: {commandData?.durationSeconds}");
             await ProcessBatteryCommand(command);
+        }
+
+        private void HandleOnboardingResponse(CloudEvent cloudEvent)
+        {
+            var onboardingResponse = _cloudEventParser.DeserializeData<OnboardingResponseV1>(cloudEvent.Data);
+            Console.WriteLine($"[<] OnboardingResponse received for serial: {onboardingResponse?.data?.serialNumber}, status: {onboardingResponse?.data?.connectionStatus}");
+
+        }
+
+        private void HandleOffboardingResponse(CloudEvent cloudEvent)
+        {
+            var offboardingResponse = _cloudEventParser.DeserializeData<OffboardingResponseV1>(cloudEvent.Data);
+            Console.WriteLine($"[<] OffboardingResponse received for serial: {offboardingResponse?.data?.serialNumber}, status: {offboardingResponse?.data?.connectionStatus}");
+            
         }
 
         /// <summary>
@@ -126,9 +187,6 @@ namespace FullFlowDemo
         /// <summary>
         /// Handles the realMode property of the battery command.
         /// </summary>
-        /// <summary>
-        /// Handles the realMode property of the battery command.
-        /// </summary>
         private void HandleRealMode(RealModeCommand realMode)
         {
             if (realMode == null)
@@ -159,7 +217,6 @@ namespace FullFlowDemo
                 Console.WriteLine("[!] Unknown realMode command type.");
             }
         }
-
 
         /// <summary>
         /// Handles the durationSeconds property of the battery command.

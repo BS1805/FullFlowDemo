@@ -13,6 +13,7 @@ namespace FullFlowDemo
     {
         private readonly IAmazonSQS _sqsClient;
         private readonly string _telemetryQueueUrl;
+        private bool _isTelemetryActive = false; 
 
         public TelemetryService(IAmazonSQS sqsClient, string telemetryQueueUrl)
         {
@@ -156,33 +157,36 @@ namespace FullFlowDemo
 
         public async Task StartTelemetryLoopAsync()
         {
+            if (_isTelemetryActive) return; // Prevent multiple loops
+            _isTelemetryActive = true;
+
             var formatter = new JsonEventFormatter();
 
-            while (true)
+            while (_isTelemetryActive)
             {
                 var telemetryData = new TelemetryV1Data
                 {
                     siteId = "SiteABC",
                     batteryInverters = new List<BatteryInverter>
+                {
+                    new BatteryInverter
                     {
-                        new BatteryInverter
-                        {
-                            deviceId = "Device123",
-                            deviceTime = DateTimeOffset.UtcNow.ToString("o"),
-                            batteryPowerW = 100,
-                            meterPowerW = 0,
-                            solarPowerW = 0,
-                            batteryReactivePowerVar = 0,
-                            gridVoltage1V = 230,
-                            gridFrequencyHz = 50,
-                            cumulativeBatteryChargeEnergyWh = 0,
-                            cumulativeBatteryDischargeEnergyWh = 0,
-                            stateOfCharge = 1,
-                            stateOfHealth = 1,
-                            maxChargePowerW = 100,
-                            maxDischargePowerW = 100
-                        }
+                        deviceId = "Device123",
+                        deviceTime = DateTimeOffset.UtcNow.ToString("o"),
+                        batteryPowerW = 100,
+                        meterPowerW = 0,
+                        solarPowerW = 0,
+                        batteryReactivePowerVar = 0,
+                        gridVoltage1V = 230,
+                        gridFrequencyHz = 50,
+                        cumulativeBatteryChargeEnergyWh = 0,
+                        cumulativeBatteryDischargeEnergyWh = 0,
+                        stateOfCharge = 1,
+                        stateOfHealth = 1,
+                        maxChargePowerW = 100,
+                        maxDischargePowerW = 100
                     }
+                }
                 };
 
                 var cloudEvent = new CloudEvent
@@ -207,6 +211,12 @@ namespace FullFlowDemo
                 Console.WriteLine("[*] Telemetry sent: " + json);
                 await Task.Delay(60_000); // every 60 seconds
             }
+        }
+
+        public void StopTelemetryLoop()
+        {
+            _isTelemetryActive = false;
+            Console.WriteLine("[*] Telemetry loop stopped.");
         }
     }
 }

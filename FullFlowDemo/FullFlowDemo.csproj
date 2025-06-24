@@ -109,7 +109,9 @@
     <Analyzer Include="..\packages\AWSSDK.SQS.4.0.0.11\analyzers\dotnet\cs\SharedAnalysisCode.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="commands.txt" />
+    <Content Include="Resources\commands.txt" />
+    <Content Include="Resources\FullProcess.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
