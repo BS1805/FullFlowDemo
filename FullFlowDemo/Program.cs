@@ -47,8 +47,6 @@ namespace FullFlowDemo
                     Console.WriteLine($"[<] Received command message: {msg.Body}");
                     await messageProcessor.ProcessMessageAsync(msg.Body, msg.ReceiptHandle, commandsQueueUrl);  // Process the message
 
-                    // Delete the message after processing
-                    //await DeleteMessageAsync(sqsClient, commandsQueueUrl, msg.ReceiptHandle);
                 }
 
 

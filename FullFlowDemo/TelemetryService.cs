@@ -104,57 +104,6 @@ namespace FullFlowDemo
             Console.WriteLine("[>] Sent OffboardingResponse");
         }
 
-        public async Task SendTelemetryAsync()
-        {
-            var telemetryData = new TelemetryV1Data
-            {
-                siteId = "SiteABC",
-                batteryInverters = new List<BatteryInverter>
-           {
-               new BatteryInverter
-               {
-                   deviceId = "Device123",
-                   deviceTime = DateTimeOffset.UtcNow.ToString("o"),
-                   batteryPowerW = 100,
-                   meterPowerW = 0,
-                   solarPowerW = 0,
-                   batteryReactivePowerVar = 0,
-                   gridVoltage1V = 230,
-                   gridFrequencyHz = 50,
-                   cumulativeBatteryChargeEnergyWh = 0,
-                   cumulativeBatteryDischargeEnergyWh = 0,
-                   stateOfCharge = 1,
-                   stateOfHealth = 1,
-                   maxChargePowerW = 100,
-                   maxDischargePowerW = 100
-               }
-           }
-            };
-
-            var cloudEvent = new CloudEvent
-            {
-                Id = Guid.NewGuid().ToString(),
-                Type = "com.evergen.energy.telemetry.v1",
-                Source = new Uri("urn:example:oem"),
-                Time = DateTimeOffset.UtcNow,
-                DataContentType = "application/json",
-                Data = telemetryData
-            };
-
-            var formatter = new JsonEventFormatter();
-            var jsonBytes = formatter.EncodeStructuredModeMessage(cloudEvent, out var contentType);
-            var json = Encoding.UTF8.GetString(jsonBytes.ToArray());
-
-            await _sqsClient.SendMessageAsync(new SendMessageRequest
-            {
-                QueueUrl = _telemetryQueueUrl,
-                MessageBody = json
-            });
-
-            Console.WriteLine("[*] Telemetry sent: " + json);
-        }
-
-
         public async Task StartTelemetryLoopAsync()
         {
             if (_isTelemetryActive) return; // Prevent multiple loops
@@ -213,10 +162,26 @@ namespace FullFlowDemo
             }
         }
 
-        public void StopTelemetryLoop()
+        public async void StopTelemetryLoop()
         {
             _isTelemetryActive = false;
             Console.WriteLine("[*] Telemetry loop stopped.");
+
+            try
+            {
+                await _sqsClient.PurgeQueueAsync(new PurgeQueueRequest
+                {
+                    QueueUrl = _telemetryQueueUrl
+                });
+                Console.WriteLine("[*] Telemetry queue purged.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[!] Failed to purge telemetry queue: {ex.Message}");
+            }
         }
+
+
+
     }
 }

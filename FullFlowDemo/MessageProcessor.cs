@@ -63,7 +63,6 @@ namespace FullFlowDemo
                         break;
                 }
 
-                // Delete the message after processing
                 await DeleteMessageAsync(receiptHandle, queueUrl);
             }
             catch (Exception ex)

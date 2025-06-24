@@ -8,7 +8,7 @@ aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name telemetry
 Command for goto dir:
 cd C:\Users\BS00829\source\repos\FullFlowDemo\FullFlowDemo
 
-Command for onBoard:
+Command for OnBoard Request:
    aws --endpoint-url=http://localhost:4566 sqs send-message ^
      --queue-url http://localhost:4566/000000000000/commands-demo ^
      --message-body file://json/onboarding-request.json
@@ -51,5 +51,5 @@ Verify Queues Empty:
    
 
 Commands & Telemetry:
-•	Commands are sent by Evergen (simulated by you via CLI).
-•	Telemetry and responses are sent by your application (the OEM/device).
+•	Commands are sent by Evergen (simulated by me via CLI).
+•	Telemetry and responses are sent by my application(eg. Program.cs) (the OEM/device).
